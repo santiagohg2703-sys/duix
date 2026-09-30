@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Matemáticas Quest — Reto del Profesor Jhony</title>
+<style>
+:root{
+  --ink:#1c1f2b; --paper:#f4f1e6; --accent:#e8a33d; --accent2:#5b8a72;
+  --danger:#c9584a; --panel:#fffdf6;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+*{box-sizing:border-box;}
+html,body{margin:0;height:100%;background:var(--ink);font-family:Georgia,'Times New Roman',serif;color:var(--paper);overflow:hidden;overscroll-behavior:none;touch-action:none;}
+#app{max-width:900px;margin:0 auto;padding:10px 8px;min-height:100%;height:100%;display:flex;flex-direction:column;}
+body.playing #app{padding:6px;}
+h1{font-weight:400;letter-spacing:.5px;text-align:center;margin:4px 0 2px;font-size:1.5rem;}
+.tag{text-align:center;color:#c8c3ae;font-size:.85rem;margin-bottom:8px;}
+body.playing h1, body.playing .tag{display:none;}
+.panel{background:var(--panel);color:var(--ink);border-radius:8px;padding:22px;box-shadow:0 8px 24px rgba(0,0,0,.35);}
+.center{text-align:center;}
+label{display:block;text-align:left;font-size:.85rem;color:#555;margin:10px 0 4px;}
+input[type=text]{width:100%;padding:9px 10px;font-size:1rem;border:1px solid #ccc;border-radius:5px;font-family:Georgia,serif;}
+button{font-family:Georgia,serif;font-size:1rem;font-weight:700;background:var(--accent);color:#2a1c07;border:none;border-radius:6px;padding:10px 20px;cursor:pointer;margin-top:14px;}
+button.secondary{background:#dcd6c0;color:#333;}
+button:hover{filter:brightness(1.07);}
+.hidden{display:none !important;}
+.instructions{text-align:left;font-size:.88rem;color:#444;line-height:1.5;background:#efe9d6;border-radius:6px;padding:10px 14px;margin-top:10px;}
+#screen-game{display:flex;flex-direction:column;flex:1;min-height:0;}
+#hud{display:flex;align-items:center;justify-content:space-between;background:#1a2a22;color:var(--paper);border-radius:6px 6px 0 0;padding:6px 10px;font-size:.72rem;gap:4px;}
+#hud span{white-space:nowrap;}
+#gamewrap{position:relative;border-radius:0 0 6px 6px;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,.4);flex:1;min-height:0;display:flex;align-items:center;justify-content:center;background:#000;}
+canvas{display:block;max-width:100%;max-height:100%;width:auto;height:auto;background:#7ec8e3;touch-action:none;}
+.zonebanner{position:absolute;top:10px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.55);color:#fff;padding:4px 14px;border-radius:4px;font-size:.8rem;letter-spacing:.5px;opacity:0;transition:opacity .5s;pointer-events:none;}
+.zonebanner.show{opacity:1;}
+.lifetoast{position:absolute;top:40%;left:50%;transform:translate(-50%,-50%);background:rgba(201,88,74,.92);color:#fff;padding:10px 20px;border-radius:6px;font-size:1.1rem;opacity:0;transition:opacity .3s;pointer-events:none;}
+.lifetoast.show{opacity:1;}
+#touchctl{position:absolute;left:0;right:0;bottom:0;display:flex;justify-content:space-between;padding:14px;pointer-events:none;}
+#touchctl .grp{display:flex;gap:12px;pointer-events:auto;}
+.tbtn{width:60px;height:60px;border-radius:50%;background:rgba(58,63,47,.55);color:#f4f1e6;font-size:1.5rem;display:flex;align-items:center;justify-content:center;user-select:none;border:2px solid rgba(244,241,230,.5);pointer-events:auto;backdrop-filter:blur(1px);}
+.tbtn:active{background:rgba(232,163,61,.7);}
+#tJump{width:72px;height:72px;font-size:1.7rem;}
+#rotateHint{position:absolute;inset:0;background:rgba(10,10,10,.9);color:#f4f1e6;display:none;align-items:center;justify-content:center;text-align:center;padding:20px;font-size:1rem;z-index:5;}
+body.showRotate #rotateHint{display:flex;}
+#qmodal, #endmodal{position:absolute;inset:0;background:rgba(20,18,10,.72);display:flex;align-items:center;justify-content:center;padding:14px;touch-action:pan-y;}
+.qbox{background:var(--panel);color:var(--ink);border-radius:8px;padding:18px 18px 14px;max-width:480px;width:100%;max-height:92%;overflow-y:auto;touch-action:pan-y;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:#c9a56b #efe9d6;}
+.qbox::-webkit-scrollbar{width:9px;}
+.qbox::-webkit-scrollbar-track{background:#efe9d6;border-radius:6px;}
+.qbox::-webkit-scrollbar-thumb{background:#c9a56b;border-radius:6px;}
+.qbox h3{margin:0 0 4px;font-size:.85rem;letter-spacing:.5px;color:#8a6d2f;text-transform:uppercase;}
+.qbox .stmt{font-size:1.05rem;line-height:1.5;margin:8px 0 14px;}
+.qbox .formula{font-family:'Courier New',monospace;font-size:1.15rem;background:#f0ecda;padding:8px 10px;border-radius:5px;margin:6px 0 14px;text-align:center;}
+.opt{display:block;width:100%;text-align:left;background:#efe9d6;color:var(--ink);border:2px solid transparent;border-radius:5px;padding:9px 12px;margin-bottom:8px;font-size:.95rem;cursor:pointer;}
+.opt:hover{border-color:var(--accent);}
+.opt.correct{background:#d9ecd0;border-color:var(--accent2);}
+.opt.wrong{background:#f3d6d1;border-color:var(--danger);}
+.fbk{font-size:.92rem;line-height:1.5;background:#f0ecda;border-radius:5px;padding:10px 12px;margin-top:6px;}
+.fbk.ok{border-left:4px solid var(--accent2);}
+.fbk.bad{border-left:4px solid var(--danger);}
+.statline{display:flex;justify-content:space-between;font-size:.92rem;padding:4px 0;border-bottom:1px dashed #ccc;}
+</style>
+</head>
+<body>
+<div id="app">
+  <h1>Matemáticas Quest</h1>
+  <div class="tag">El desafío de optimización del profesor Jhony</div>
+  <div class="tag" id="creditsTag" style="font-size:.75rem;margin-top:-6px;">Juego creado por: <span id="creatorNameTag"></span></div>
+
+  <!-- REGISTRO -->
+  <div id="screen-reg" class="panel">
+    <label>Nombre completo</label>
+    <input type="text" id="regName" placeholder="Nombre y apellido">
+    <div class="center"><button id="btnGo">COMENZAR JUEGO</button></div>
+    <div class="instructions">
+      <strong>Cómo jugar:</strong> ← → mover · ESPACIO saltar (o los botones táctiles).<br>
+      Salta sobre los enemigos para derrotarlos; cada uno te hará una pregunta de <strong>derivadas parciales, matriz Hessiana</strong> o <strong>multiplicadores de Lagrange</strong>. Cada respuesta correcta suma 10 puntos oficiales (máx. 100) más puntos bonus. Evita pinchos y no caigas a los huecos.<br>
+      Al final del recorrido te espera <strong>El Hessiano Final</strong>: salta sobre él 3 veces para vencerlo antes de entrar al castillo.<br>
+      Tienes 3 vidas. Objetivo: responder las 10 preguntas, vencer al jefe y llegar al castillo.
+    </div>
+  </div>
+
+  <!-- JUEGO -->
+  <div id="screen-game" class="hidden">
+    <div id="hud">
+      <span id="hudOfficial">🎯 0/100</span>
+      <span>⭐ <b id="hudScore">0</b></span>
+      <span id="hudLives">❤️❤️❤️</span>
+      <span>Pregunta <b id="hudQ">0</b>/10</span>
+    </div>
+    <div id="gamewrap">
+      <canvas id="cv" width="800" height="400"></canvas>
+      <div class="zonebanner" id="zoneBanner"></div>
+      <div class="lifetoast" id="lifeToast">¡PERDISTE UNA VIDA!</div>
+
+      <div id="qmodal" class="hidden">
+        <div class="qbox">
+          <h3 id="qTema">Reto matemático</h3>
+          <div class="stmt" id="qStmt"></div>
+          <div id="qOpts"></div>
+          <div id="qFbk" class="fbk hidden"></div>
+          <div class="center"><button id="qContinue" class="hidden">CONTINUAR</button></div>
+        </div>
+      </div>
+
+      <div id="endmodal" class="hidden">
+        <div class="qbox center">
+          <h3 id="endTitle">GAME OVER</h3>
+          <div id="endStats"></div>
+          <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+            <button id="btnRestart">REINICIAR JUEGO</button>
+            <button id="btnNewPlayer" class="secondary">OTRO JUGADOR</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="touchctl">
+        <div class="grp">
+          <div class="tbtn" id="tLeft">◀</div>
+          <div class="tbtn" id="tRight">▶</div>
+        </div>
+        <div class="tbtn" id="tJump">⤒</div>
+      </div>
+      <div id="rotateHint">📱↻ Gira tu teléfono a horizontal para jugar más cómodo<br><small>(igual funciona en vertical)</small></div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+/* ---------- BANCO DE PREGUNTAS (2 variantes verificadas por cada una de las 10) ---------- */
+const QUESTION_BANK = [
+[ // 1 · Derivada parcial ∂f/∂x
+{tema:"Derivadas parciales", dificultad:"Intermedia",
+ pregunta:"Calcula la derivada parcial ∂f/∂x de f(x,y) = x² + y² − 4x − 6y + 13.",
+ formula:"f(x,y) = x² + y² − 4x − 6y + 13",
+ opciones:["2x − 4","2x − 6","2y − 4","x² − 4"], correcta:0,
+ explicacion:"Al derivar respecto a x, y se trata como constante: ∂/∂x(x²)=2x, ∂/∂x(y²)=0, ∂/∂x(−4x)=−4, el resto (en y) se anula. Entonces ∂f/∂x = 2x − 4."},
+{tema:"Derivadas parciales", dificultad:"Intermedia",
+ pregunta:"Calcula la derivada parcial ∂f/∂x de f(x,y) = 2x² + y² − 8x − 2y + 3.",
+ formula:"f(x,y) = 2x² + y² − 8x − 2y + 3",
+ opciones:["4x − 8","4x − 2","2x − 8","4x² − 8"], correcta:0,
+ explicacion:"Derivando respecto a x (y constante): ∂/∂x(2x²)=4x, ∂/∂x(y²)=0, ∂/∂x(−8x)=−8, el resto se anula. Entonces ∂f/∂x = 4x − 8."}
+],
+[ // 2 · Punto crítico usando ambas parciales
+{tema:"Punto crítico (parciales)", dificultad:"Intermedia",
+ pregunta:"Con ∂f/∂x = 2x − 4 y ∂f/∂y = 2y − 6 para f(x,y) = x² + y² − 4x − 6y + 13, ¿cuál es el punto crítico?",
+ formula:"2x − 4 = 0    2y − 6 = 0",
+ opciones:["(2, 3)","(2, −3)","(4, 6)","(−2, −3)"], correcta:0,
+ explicacion:"Un punto crítico ocurre donde ambas parciales son cero simultáneamente: 2x−4=0 → x=2; 2y−6=0 → y=3. El punto crítico es (2, 3)."},
+{tema:"Punto crítico (parciales)", dificultad:"Intermedia",
+ pregunta:"Con ∂f/∂x = 4x − 8 y ∂f/∂y = 2y − 2 para f(x,y) = 2x² + y² − 8x − 2y + 3, ¿cuál es el punto crítico?",
+ formula:"4x − 8 = 0    2y − 2 = 0",
+ opciones:["(2, 1)","(1, 2)","(4, 1)","(2, −1)"], correcta:0,
+ explicacion:"Igualando ambas parciales a cero: 4x−8=0 → x=2; 2y−2=0 → y=1. El punto crítico es (2, 1)."}
+],
+[ // 3 · Matriz Hessiana
+{tema:"Matriz Hessiana", dificultad:"Intermedia/Avanzada",
+ pregunta:"Para f(x,y) = x² + y² − 4x − 6y + 13, las segundas derivadas son f_xx=2, f_yy=2, f_xy=0. ¿Cuál es la matriz Hessiana H?",
+ formula:"H = [ [f_xx, f_xy] , [f_xy, f_yy] ]",
+ opciones:["[[2, 0], [0, 2]]","[[0, 2], [2, 0]]","[[2, 2], [2, 2]]","[[4, 0], [0, 4]]"], correcta:0,
+ explicacion:"La matriz Hessiana se arma colocando f_xx y f_yy en la diagonal y f_xy en las posiciones cruzadas: H = [[2, 0], [0, 2]]."},
+{tema:"Matriz Hessiana", dificultad:"Intermedia/Avanzada",
+ pregunta:"Para f(x,y) = 2x² + y² − 8x − 2y + 3, las segundas derivadas son f_xx=4, f_yy=2, f_xy=0. ¿Cuál es la matriz Hessiana H?",
+ formula:"H = [ [f_xx, f_xy] , [f_xy, f_yy] ]",
+ opciones:["[[4, 0], [0, 2]]","[[2, 0], [0, 4]]","[[4, 4], [4, 4]]","[[8, 0], [0, 2]]"], correcta:0,
+ explicacion:"La matriz Hessiana coloca f_xx y f_yy en la diagonal y f_xy en las posiciones cruzadas: H = [[4, 0], [0, 2]]."}
+],
+[ // 4 · Clasificación con criterio del Hessiano (mínimo)
+{tema:"Criterio del Hessiano", dificultad:"Avanzada",
+ pregunta:"En el punto crítico (2,3) de f(x,y)=x²+y²−4x−6y+13, H=[[2,0],[0,2]], por lo que det(H)=4 y f_xx=2. ¿Qué tipo de punto crítico es?",
+ formula:"det(H) = (2)(2) − (0)(0) = 4 > 0,  f_xx = 2 > 0",
+ opciones:["Mínimo local","Máximo local","Punto de silla","No se puede determinar"], correcta:0,
+ explicacion:"Criterio del Hessiano: si det(H) > 0 y f_xx > 0, el punto crítico es un mínimo local. Aquí det(H)=4>0 y f_xx=2>0, así que (2,3) es un mínimo local."},
+{tema:"Criterio del Hessiano", dificultad:"Avanzada",
+ pregunta:"En el punto crítico (−1,2) de f(x,y)=−x²−2x−y²+4y−1, H=[[−2,0],[0,−2]], por lo que det(H)=4 y f_xx=−2. ¿Qué tipo de punto crítico es?",
+ formula:"det(H) = (−2)(−2) − (0)(0) = 4 > 0,  f_xx = −2 < 0",
+ opciones:["Mínimo local","Máximo local","Punto de silla","No se puede determinar"], correcta:1,
+ explicacion:"Criterio del Hessiano: si det(H) > 0 y f_xx < 0, el punto crítico es un máximo local. Aquí det(H)=4>0 y f_xx=−2<0, así que (−1,2) es un máximo local."}
+],
+[ // 5 · Clasificación con criterio del Hessiano (punto de silla)
+{tema:"Criterio del Hessiano", dificultad:"Avanzada",
+ pregunta:"Para f(x,y) = x² − y², el único punto crítico es (0,0), con H=[[2,0],[0,−2]] y det(H) = −4. ¿Qué tipo de punto crítico es (0,0)?",
+ formula:"det(H) = (2)(−2) − (0)(0) = −4 < 0",
+ opciones:["Mínimo local","Máximo local","Punto de silla","No es un punto crítico"], correcta:2,
+ explicacion:"Criterio del Hessiano: si det(H) < 0, el punto crítico es un punto de silla, sin importar el signo de f_xx. Como det(H)=−4<0, (0,0) es un punto de silla."},
+{tema:"Criterio del Hessiano", dificultad:"Avanzada",
+ pregunta:"Para g(x,y) = 3x² − 2y², el único punto crítico es (0,0), con H=[[6,0],[0,−4]] y det(H) = −24. ¿Qué tipo de punto crítico es (0,0)?",
+ formula:"det(H) = (6)(−4) − (0)(0) = −24 < 0",
+ opciones:["Mínimo local","Máximo local","Punto de silla","No es un punto crítico"], correcta:2,
+ explicacion:"Como det(H)=−24<0, por el criterio del Hessiano (0,0) es un punto de silla, independientemente de que g_xx=6 sea positivo."}
+],
+[ // 6 · Lagrange función objetivo
+{tema:"Lagrange: función objetivo", dificultad:"Intermedia",
+ pregunta:"Se quiere maximizar el producto xy sujeto a que el punto (x,y) esté sobre la circunferencia unitaria. ¿Cuál es la función objetivo?",
+ formula:"Maximizar xy  sujeto a  x² + y² = 1",
+ opciones:["f(x,y) = xy","g(x,y) = x² + y² − 1","f(x,y) = x² + y²","g(x,y) = xy − 1"], correcta:0,
+ explicacion:"La función objetivo es la cantidad que se quiere maximizar o minimizar: aquí, f(x,y) = xy."},
+{tema:"Lagrange: función objetivo", dificultad:"Intermedia",
+ pregunta:"Se quiere maximizar la suma x+y sujeto a que el punto (x,y) esté sobre la circunferencia x²+y²=8. ¿Cuál es la función objetivo?",
+ formula:"Maximizar x+y  sujeto a  x² + y² = 8",
+ opciones:["f(x,y) = x+y","g(x,y) = x² + y² − 8","f(x,y) = x² + y²","g(x,y) = x+y−8"], correcta:0,
+ explicacion:"La función objetivo es la cantidad que se quiere maximizar o minimizar: aquí, f(x,y) = x+y."}
+],
+[ // 7 · Lagrange restricción
+{tema:"Lagrange: restricción", dificultad:"Intermedia",
+ pregunta:"Para el mismo problema (maximizar xy sujeto a x²+y²=1), ¿cuál es la restricción escrita como g(x,y)=0?",
+ formula:"x² + y² = 1",
+ opciones:["g(x,y) = xy","g(x,y) = x² + y² − 1","g(x,y) = x + y − 1","g(x,y) = x² − y² − 1"], correcta:1,
+ explicacion:"La restricción se escribe igualando todo a cero: x²+y²=1 se convierte en g(x,y)=x²+y²−1=0."},
+{tema:"Lagrange: restricción", dificultad:"Intermedia",
+ pregunta:"Para el mismo problema (maximizar x+y sujeto a x²+y²=8), ¿cuál es la restricción escrita como g(x,y)=0?",
+ formula:"x² + y² = 8",
+ opciones:["g(x,y) = x+y","g(x,y) = x² + y² − 8","g(x,y) = x − y − 8","g(x,y) = x² − y² − 8"], correcta:1,
+ explicacion:"La restricción se escribe igualando todo a cero: x²+y²=8 se convierte en g(x,y)=x²+y²−8=0."}
+],
+[ // 8 · Ecuaciones de Lagrange
+{tema:"Ecuaciones de Lagrange", dificultad:"Intermedia/Avanzada",
+ pregunta:"Con f(x,y)=xy y g(x,y)=x²+y²−1, ¿cuál es el sistema correcto que resulta de ∇f = λ∇g?",
+ formula:"∇f=(y,x)   ∇g=(2x,2y)",
+ opciones:["y = 2λx,  x = 2λy,  x²+y²=1","x = 2λx,  y = 2λy,  x²+y²=1","y = λx,  x = λy,  x+y=1","2x = λy,  2y = λx,  x²+y²=1"], correcta:0,
+ explicacion:"∇f=(∂f/∂x, ∂f/∂y)=(y,x) y ∇g=(2x,2y). Igualando componente a componente: y=2λx, x=2λy, junto con la restricción x²+y²=1."},
+{tema:"Ecuaciones de Lagrange", dificultad:"Intermedia/Avanzada",
+ pregunta:"Con f(x,y)=x+y y g(x,y)=x²+y²−8, ¿cuál es el sistema correcto que resulta de ∇f = λ∇g?",
+ formula:"∇f=(1,1)   ∇g=(2x,2y)",
+ opciones:["1 = 2λx,  1 = 2λy,  x²+y²=8","x = 2λ,  y = 2λ,  x²+y²=8","1 = λx,  1 = λy,  x+y=8","2x = λ,  2y = λ,  x²+y²=8"], correcta:0,
+ explicacion:"∇f=(∂f/∂x, ∂f/∂y)=(1,1) y ∇g=(2x,2y). Igualando componente a componente: 1=2λx, 1=2λy, junto con la restricción x²+y²=8."}
+],
+[ // 9 · Puntos candidatos
+{tema:"Puntos candidatos", dificultad:"Avanzada",
+ pregunta:"Resolviendo el sistema y=2λx, x=2λy, x²+y²=1 se obtiene λ=±1/2 y x=±y. ¿Cuáles son los puntos candidatos?",
+ formula:"x = ±y,  x² + y² = 1",
+ opciones:["(√2/2, √2/2), (−√2/2, −√2/2), (√2/2, −√2/2), (−√2/2, √2/2)","(1, 0) y (0, 1)","Únicamente (0, 0)","(1, 1) y (−1, −1)"], correcta:0,
+ explicacion:"Si x=y: 2x²=1 → x=±√2/2, y=x. Si x=−y: también 2x²=1 → x=±√2/2, y=−x. Los cuatro puntos candidatos son (±√2/2, ±√2/2) con las combinaciones de signo iguales y opuestos."},
+{tema:"Puntos candidatos", dificultad:"Avanzada",
+ pregunta:"Resolviendo el sistema 1=2λx, 1=2λy, x²+y²=8 se obtiene que x=y (para λ≠0). ¿Cuáles son los puntos candidatos?",
+ formula:"x = y,  x² + y² = 8",
+ opciones:["(2, 2) y (−2, −2)","(4, 0) y (0, 4)","Únicamente (0, 0)","(2, −2) y (−2, 2)"], correcta:0,
+ explicacion:"Si x=y, entonces x²+x²=8 → 2x²=8 → x²=4 → x=±2, con y=x. Los puntos candidatos son (2,2) y (−2,−2)."}
+],
+[ // 10 · Lagrange aplicado
+{tema:"Lagrange aplicado", dificultad:"Avanzada",
+ pregunta:"Evaluando f(x,y)=xy en los puntos candidatos, ¿cuál es el valor máximo de f sujeto a x²+y²=1?",
+ formula:"f(√2/2, √2/2) = 1/2      f(√2/2, −√2/2) = −1/2",
+ opciones:["1","1/2","√2/2","2"], correcta:1,
+ explicacion:"En (√2/2,√2/2): f=(√2/2)(√2/2)=2/4=1/2. En (−√2/2,−√2/2) también da 1/2. Los otros dos puntos dan −1/2. El valor máximo es 1/2."},
+{tema:"Lagrange aplicado", dificultad:"Avanzada",
+ pregunta:"Evaluando f(x,y)=x+y en los puntos candidatos, ¿cuál es el valor máximo de f sujeto a x²+y²=8?",
+ formula:"f(2,2) = 4      f(−2,−2) = −4",
+ opciones:["2","4","8","√8"], correcta:1,
+ explicacion:"En (2,2): f=2+2=4. En (−2,−2): f=−2−2=−4. El valor máximo de f sujeto a la restricción es 4."}
+]
+];
+let QUESTIONS = QUESTION_BANK.map(slot=>slot[0]);
+function buildQuestions(){ QUESTIONS = QUESTION_BANK.map(slot=> slot[Math.floor(Math.random()*slot.length)]); }
+
+/* ---------- NIVEL ---------- */
+const GRAV=0.62, MOVE=3.1, JUMPV=-11.4, GROUNDY=340, H=400, W=800;
+const LEVEL_W=9800;
+const ZONES=[
+ {from:0,to:2400,name:"NIVEL 1 · Reino de las Derivadas",bg:["#7ec8e3","#bfe6f0"]},
+ {from:2400,to:4800,name:"NIVEL 2 · Valle de los Máximos y Mínimos",bg:["#9fcf8f","#d8ecc9"]},
+ {from:4800,to:7200,name:"NIVEL 3 · Montañas de Lagrange",bg:["#8a90c9","#c7cbe8"]},
+ {from:7200,to:9800,name:"NIVEL 4 · Castillo de la Optimización",bg:["#c98aa6","#ecc9d8"]}
+];
+const PITS=[[480,560],[1150,1230],[1950,2030],[2650,2730],[3450,3530],[4450,4530],[4950,5030],[5650,5730],[6350,6430],[7050,7130],[7800,7880],[8500,8580],[9000,9080]];
+const SPIKES=[[650,730],[1300,1380],[3750,3830],[6500,6580],[7900,7980],[8650,8730]];
+const COINS=[300,670,1040,1410,1780,2150,2520,2890,3260,3630,4000,4370,4740,5110,5480,5850,6220,6590,6960,7330,7700,8070,8440,8810,9180].map(x=>({x,y:300,r:8,got:false}));
+const ENEMY_DEFS=[
+ {x:300, range:[200,420], name:"Derivín", color:"#3f8f82"},
+ {x:900, range:[780,1080], name:"Máximus", color:"#c67c1e"},
+ {x:1700, range:[1550,1900], name:"Mínimus", color:"#b04a4a"},
+ {x:3100, range:[2950,3350], name:"Función X", color:"#3c66c9"},
+ {x:4100, range:[3950,4350], name:"Derivín", color:"#3f8f82"},
+ {x:5300, range:[5150,5500], name:"Lagrangito", color:"#8a4fc9"},
+ {x:6000, range:[5850,6200], name:"Lagrangito", color:"#8a4fc9"},
+ {x:6800, range:[6650,7000], name:"Función X", color:"#3c66c9"},
+ {x:7500, range:[7350,7700], name:"Máximus", color:"#c67c1e"},
+ {x:8200, range:[8050,8400], name:"Mínimus", color:"#b04a4a"}
+];
+const BOSS_DEF={x:9300, range:[9150,9450], name:"El Hessiano Final", color:"#4a2f5c", w:56, h:56, hitsNeeded:3};
+
+function isPit(x){for(const p of PITS){if(x>p[0]&&x<p[1])return true;}return false;}
+function isSpike(x){for(const s of SPIKES){if(x>s[0]&&x<s[1])return true;}return false;}
+function zoneAt(x){for(const z of ZONES){if(x>=z.from&&x<z.to)return z;}return ZONES[ZONES.length-1];}
+
+/* ---------- ESTADO ---------- */
+const CREATOR_NAME = "Santiago Huertas Gil";
+let student={name:""};
+let score=0, officialScore=0, lives=3, qIndex=0, correctCount=0, incorrectCount=0, startTime=0;
+let checkpointX=40, paused=false, gameActive=false, wonGame=false, bossDefeated=false;
+let player, enemies, boss, coins, keys={left:false,right:false,jump:false}, camX=0, currentZoneName="";
+
+const cv=document.getElementById('cv'), ctx=cv.getContext('2d');
+
+function resetPlayer(x){ player={x:x, y:GROUNDY-38, w:26, h:38, vx:0, vy:0, onGround:false, facing:1}; }
+
+function newGame(){
+  buildQuestions();
+  score=0; officialScore=0; lives=3; qIndex=0; correctCount=0; incorrectCount=0; checkpointX=40; wonGame=false; bossDefeated=false;
+  enemies=ENEMY_DEFS.map((d,i)=>({...d, w:28, h:28, y:GROUNDY-28, dir:1, alive:true, qi:i}));
+  boss={...BOSS_DEF, y:GROUNDY-BOSS_DEF.h, dir:1, alive:true, hits:0};
+  coins=COINS.map(c=>({...c}));
+  resetPlayer(checkpointX);
+  startTime=Date.now();
+  gameActive=true; paused=false;
+  currentZoneName="";
+  updateHUD();
+  document.getElementById('endmodal').classList.add('hidden');
+}
+
+function addScore(n){ score=Math.max(0,score+n); updateHUD(); }
+function updateHUD(){
+  document.getElementById('hudOfficial').textContent=officialScore+"/100";
+  document.getElementById('hudScore').textContent=score;
+  document.getElementById('hudLives').textContent="❤️".repeat(Math.max(0,lives))+"🖤".repeat(Math.max(0,3-lives));
+  document.getElementById('hudQ').textContent=Math.min(qIndex,10);
+}
+
+function loseLife(reason){
+  if(!gameActive||paused) return;
+  lives--; addScore(-50);
+  showToast("¡PERDISTE UNA VIDA!");
+  paused=true;
+  setTimeout(()=>{
+    if(lives<=0){ endGame(false); return; }
+    resetPlayer(checkpointX);
+    paused=false;
+  }, 900);
+}
+
+function showToast(msg){
+  const t=document.getElementById('lifeToast');
+  t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),850);
+}
+function showZoneBanner(name){
+  const b=document.getElementById('zoneBanner');
+  b.textContent=name; b.classList.add('show');
+  setTimeout(()=>b.classList.remove('show'),1800);
+}
+
+/* ---------- PREGUNTAS ---------- */
+function askQuestion(qi){
+  paused=true;
+  const q=QUESTIONS[qi];
+  document.getElementById('qTema').textContent="Reto matemático · "+q.tema+" ("+q.dificultad+")";
+  document.getElementById('qStmt').innerHTML=q.pregunta+"<div class='formula'>"+q.formula+"</div>";
+  const optsEl=document.getElementById('qOpts'); optsEl.innerHTML="";
+  const fbk=document.getElementById('qFbk'); fbk.classList.add('hidden'); fbk.textContent="";
+  document.getElementById('qContinue').classList.add('hidden');
+  q.opciones.forEach((op,i)=>{
+    const b=document.createElement('button');
+    b.className='opt'; b.textContent=String.fromCharCode(65+i)+") "+op;
+    b.onclick=()=>answerQuestion(qi,i,b,optsEl);
+    optsEl.appendChild(b);
+  });
+  document.getElementById('qmodal').classList.remove('hidden');
+}
+function answerQuestion(qi,chosen,btn,optsEl){
+  const q=QUESTIONS[qi];
+  [...optsEl.children].forEach((b,i)=>{
+    b.onclick=null;
+    if(i===q.correcta) b.classList.add('correct');
+    else if(i===chosen) b.classList.add('wrong');
+  });
+  const fbk=document.getElementById('qFbk');
+  fbk.classList.remove('hidden');
+  if(chosen===q.correcta){
+    correctCount++; addScore(100); officialScore=Math.min(100,officialScore+10); updateHUD();
+    fbk.className='fbk ok';
+    fbk.innerHTML="<strong>¡CORRECTO! +10 puntos oficiales (+100 bonus)</strong><br>"+q.explicacion;
+  } else {
+    incorrectCount++; addScore(-25);
+    fbk.className='fbk bad';
+    fbk.innerHTML="<strong>RESPUESTA INCORRECTA</strong><br>Respuesta correcta: "+String.fromCharCode(65+q.correcta)+") "+q.opciones[q.correcta]+"<br>"+q.explicacion;
+  }
+  document.getElementById('qContinue').classList.remove('hidden');
+  document.getElementById('qContinue').onclick=()=>{
+    document.getElementById('qmodal').classList.add('hidden');
+    qIndex=qi+1; updateHUD();
+    const wrong = chosen!==q.correcta;
+    paused=false;
+    if(wrong) loseLife('respuesta');
+    if(qIndex>=10) wonGame=true; // habilita llegar al castillo
+  };
+}
+
+/* ---------- FIN DE JUEGO ---------- */
+function endGame(victory){
+  gameActive=false; paused=true;
+  const elapsed=Math.round((Date.now()-startTime)/1000);
+  const mm=String(Math.floor(elapsed/60)).padStart(2,'0'), ss=String(elapsed%60).padStart(2,'0');
+  const total=correctCount+incorrectCount;
+  const pct=total>0?Math.round((correctCount/total)*100):0;
+  const nota=(officialScore/100*5).toFixed(1);
+  document.getElementById('endTitle').textContent = victory ? "🎉 ¡FELICIDADES! HAS COMPLETADO EL DESAFÍO 🎉" : "GAME OVER";
+  const rows=[
+    ["Estudiante", student.name||"—"],
+    ["Puntaje oficial (rúbrica)", "<span style='color:#8a6d2f'>"+officialScore+" / 100</span>"],
+    ["Nota (escala 0.0–5.0)", "<span style='color:#8a6d2f;font-size:1.15em'>"+nota+"</span>"],
+    ["Puntaje bonus (juego)", score],
+    ["Respuestas correctas", correctCount+"/10"],
+    ["Respuestas incorrectas", incorrectCount+"/10"],
+    ["Vidas restantes", Math.max(0,lives)],
+    ["Tiempo utilizado", mm+":"+ss],
+    ["Precisión", pct+"%"]
+  ];
+  document.getElementById('endStats').innerHTML = rows.map(r=>
+    "<div class='statline'><span>"+r[0]+"</span><span><b>"+r[1]+"</b></span></div>").join('')
+    + "<div style='margin-top:10px;font-size:.8rem;color:#777;'>Juego creado por: <b>"+CREATOR_NAME+"</b><br>Para la clase del profesor Jhony</div>";
+  document.getElementById('endmodal').classList.remove('hidden');
+}
+
+/* ---------- FÍSICA / LOOP ---------- */
+function groundTopAt(x){ return isPit(x) ? null : GROUNDY; }
+
+function update(){
+  if(!gameActive||paused) return;
+  player.vx = keys.left ? -MOVE : keys.right ? MOVE : 0;
+  if(keys.left) player.facing=-1; if(keys.right) player.facing=1;
+  if(keys.jump && player.onGround){ player.vy=JUMPV; player.onGround=false; }
+  player.vy+=GRAV;
+  player.x+=player.vx; player.y+=player.vy;
+  player.x=Math.max(10, Math.min(LEVEL_W-40, player.x));
+
+  const footY=player.y+player.h;
+  const gTop=groundTopAt(player.x+player.w/2);
+  if(gTop!==null && footY>=gTop && player.vy>=0){
+    player.y=gTop-player.h; player.vy=0; player.onGround=true;
+  } else { player.onGround=false; }
+
+  if(player.y > H+80){ loseLife('caida'); return; }
+  if(player.onGround && isSpike(player.x+player.w/2)){ loseLife('pinchos'); return; }
+
+  // monedas
+  for(const c of coins){
+    if(c.got) continue;
+    const dx=(player.x+player.w/2)-c.x, dy=(player.y+player.h/2)-c.y;
+    if(Math.hypot(dx,dy) < 22){ c.got=true; addScore(10); }
+  }
+
+  // enemigos
+  for(const e of enemies){
+    if(!e.alive) continue;
+    e.x += e.dir*1.1;
+    if(e.x<e.range[0]||e.x>e.range[1]) e.dir*=-1;
+    const overlapX = player.x < e.x+e.w && player.x+player.w > e.x;
+    const overlapY = player.y < e.y+e.h && player.y+player.h > e.y;
+    if(overlapX && overlapY){
+      const fromAbove = player.vy>0 && (player.y+player.h) < (e.y+e.h*0.6);
+      if(fromAbove){
+        e.alive=false; player.vy=-8; addScore(50);
+        checkpointX=Math.max(checkpointX, e.x-40);
+        askQuestion(e.qi);
+      } else {
+        loseLife('enemigo'); return;
+      }
+    }
+  }
+
+  // jefe final
+  if(boss.alive){
+    boss.x += boss.dir*0.9;
+    if(boss.x<boss.range[0]||boss.x>boss.range[1]) boss.dir*=-1;
+    const overlapX = player.x < boss.x+boss.w && player.x+player.w > boss.x;
+    const overlapY = player.y < boss.y+boss.h && player.y+player.h > boss.y;
+    if(overlapX && overlapY){
+      const fromAbove = player.vy>0 && (player.y+player.h) < (boss.y+boss.h*0.6);
+      if(fromAbove){
+        boss.hits++; player.vy=-9; addScore(30);
+        checkpointX=Math.max(checkpointX, boss.x-60);
+        if(boss.hits>=boss.hitsNeeded){ boss.alive=false; bossDefeated=true; addScore(150); showToast("¡JEFE DERROTADO! +150"); }
+        else showToast("¡Golpe al jefe! "+boss.hits+"/"+boss.hitsNeeded);
+      } else {
+        loseLife('jefe'); return;
+      }
+    }
+  }
+
+  // castillo final
+  if(qIndex>=10 && bossDefeated && player.x > LEVEL_W-90){ endGame(true); return; }
+
+  // banner de zona
+  const z=zoneAt(player.x);
+  if(z.name!==currentZoneName){ currentZoneName=z.name; showZoneBanner(z.name); }
+
+  camX = Math.max(0, Math.min(LEVEL_W-W, player.x - W/2));
+}
+
+/* ---------- DIBUJO ---------- */
+function draw(){
+  const z=zoneAt(player? player.x:0);
+  const grad=ctx.createLinearGradient(0,0,0,H);
+  grad.addColorStop(0, z.bg[0]); grad.addColorStop(1, z.bg[1]);
+  ctx.fillStyle=grad; ctx.fillRect(0,0,W,H);
+
+  ctx.save(); ctx.translate(-camX,0);
+
+  // suelo con huecos
+  ctx.fillStyle="#5b4632";
+  const startX=Math.floor(camX/20)*20;
+  for(let x=startX-20; x<camX+W+20; x+=4){
+    if(!isPit(x)) ctx.fillRect(x,GROUNDY,4,H-GROUNDY);
+  }
+  ctx.fillStyle="#7a5f3f";
+  for(let x=startX-20; x<camX+W+20; x+=4){
+    if(!isPit(x)) ctx.fillRect(x,GROUNDY,4,6);
+  }
+  // pinchos
+  ctx.fillStyle="#7a1f1f";
+  for(const s of SPIKES){
+    for(let x=s[0]; x<s[1]; x+=14){
+      ctx.beginPath(); ctx.moveTo(x,GROUNDY); ctx.lineTo(x+7,GROUNDY-16); ctx.lineTo(x+14,GROUNDY); ctx.fill();
+    }
+  }
+  // monedas
+  for(const c of coins){
+    if(c.got) continue;
+    ctx.fillStyle="#f2c14e"; ctx.beginPath(); ctx.arc(c.x,c.y,c.r,0,7); ctx.fill();
+    ctx.strokeStyle="#b8860b"; ctx.stroke();
+  }
+  // castillo
+  ctx.fillStyle="#6b5b7a";
+  ctx.fillRect(LEVEL_W-90,GROUNDY-90,70,90);
+  ctx.fillRect(LEVEL_W-100,GROUNDY-70,10,70);
+  ctx.fillRect(LEVEL_W-30,GROUNDY-70,10,70);
+  ctx.fillStyle="#f4e6c1"; ctx.font="12px Georgia"; ctx.fillText("META",LEVEL_W-78,GROUNDY-96);
+
+  // enemigos
+  for(const e of enemies){
+    if(!e.alive) continue;
+    ctx.fillStyle=e.color;
+    rr(e.x,e.y,e.w,e.h,6); ctx.fill();
+    ctx.fillStyle="#fff"; ctx.beginPath(); ctx.arc(e.x+e.w*0.3,e.y+e.h*0.35,2.4,0,7); ctx.arc(e.x+e.w*0.7,e.y+e.h*0.35,2.4,0,7); ctx.fill();
+    ctx.fillStyle="#222"; ctx.font="10px Georgia"; ctx.textAlign="center";
+    ctx.fillText(e.name, e.x+e.w/2, e.y-6);
+  }
+  ctx.textAlign="left";
+
+  // jefe final
+  if(boss.alive){
+    ctx.fillStyle=boss.color;
+    rr(boss.x,boss.y,boss.w,boss.h,6); ctx.fill();
+    ctx.fillStyle="#f2b366";
+    ctx.beginPath(); ctx.arc(boss.x+boss.w*0.32,boss.y+boss.h*0.4,4,0,7); ctx.arc(boss.x+boss.w*0.68,boss.y+boss.h*0.4,4,0,7); ctx.fill();
+    ctx.fillStyle="#fff"; ctx.font="11px Georgia"; ctx.textAlign="center";
+    ctx.fillText(boss.name, boss.x+boss.w/2, boss.y-8);
+    for(let i=0;i<boss.hitsNeeded;i++){
+      ctx.fillStyle = i<boss.hits ? "#c9584a" : "rgba(255,255,255,.35)";
+      ctx.beginPath(); ctx.arc(boss.x+boss.w/2-16+i*16, boss.y-18, 4,0,7); ctx.fill();
+    }
+    ctx.textAlign="left";
+  }
+
+  // jugador
+  ctx.fillStyle="#e8a33d";
+  rr(player.x,player.y,player.w,player.h,6); ctx.fill();
+  ctx.fillStyle="#2a1c07";
+  ctx.fillRect(player.x+ (player.facing>0?player.w-9:3), player.y+8, 6,6);
+  ctx.fillStyle="#3f2a12"; ctx.fillRect(player.x+4,player.y-6,player.w-8,7); // sombrerito
+
+  ctx.restore();
+}
+
+function loop(){
+  try{ update(); draw(); }
+  catch(err){ console.error('Error en el juego:', err); }
+  requestAnimationFrame(loop);
+}
+
+/* rectángulo redondeado compatible con cualquier motor de Canvas */
+function rr(x,y,w,h,r){
+  if(typeof r==='number') r=[r,r,r,r];
+  const [tl,tr,br,bl]=r;
+  ctx.beginPath();
+  ctx.moveTo(x+tl,y);
+  ctx.lineTo(x+w-tr,y);
+  ctx.quadraticCurveTo(x+w,y,x+w,y+tr);
+  ctx.lineTo(x+w,y+h-br);
+  ctx.quadraticCurveTo(x+w,y+h,x+w-br,y+h);
+  ctx.lineTo(x+bl,y+h);
+  ctx.quadraticCurveTo(x,y+h,x,y+h-bl);
+  ctx.lineTo(x,y+tl);
+  ctx.quadraticCurveTo(x,y,x+tl,y);
+  ctx.closePath();
+}
+
+/* ---------- CONTROLES ---------- */
+window.addEventListener('keydown',e=>{
+  if(e.code==='ArrowLeft') keys.left=true;
+  if(e.code==='ArrowRight') keys.right=true;
+  if(e.code==='Space'){ keys.jump=true; e.preventDefault(); }
+});
+window.addEventListener('keyup',e=>{
+  if(e.code==='ArrowLeft') keys.left=false;
+  if(e.code==='ArrowRight') keys.right=false;
+  if(e.code==='Space') keys.jump=false;
+});
+function bindTouch(id,prop){
+  const el=document.getElementById(id);
+  const on=ev=>{ev.preventDefault();keys[prop]=true;};
+  const off=ev=>{ev.preventDefault();keys[prop]=false;};
+  el.addEventListener('touchstart',on); el.addEventListener('touchend',off);
+  el.addEventListener('mousedown',on); el.addEventListener('mouseup',off); el.addEventListener('mouseleave',off);
+}
+bindTouch('tLeft','left'); bindTouch('tRight','right'); bindTouch('tJump','jump');
+
+/* ---------- PANTALLAS ---------- */
+document.getElementById('creatorNameTag').textContent = CREATOR_NAME;
+document.getElementById('btnGo').onclick=()=>{
+  const name=document.getElementById('regName').value.trim();
+  if(!name){ alert('Escribe tu nombre para continuar.'); return; }
+  student={name};
+  document.getElementById('screen-reg').classList.add('hidden');
+  document.getElementById('screen-game').classList.remove('hidden');
+  document.body.classList.add('playing');
+  newGame();
+  loop();
+  checkOrientation();
+};
+document.getElementById('btnRestart').onclick=()=>{ newGame(); };
+document.getElementById('btnNewPlayer').onclick=()=>{
+  gameActive=false;
+  document.getElementById('endmodal').classList.add('hidden');
+  document.getElementById('screen-game').classList.add('hidden');
+  document.body.classList.remove('playing');
+  document.getElementById('screen-reg').classList.remove('hidden');
+  document.getElementById('regName').value='';
+  document.getElementById('regName').focus();
+};
+
+function checkOrientation(){
+  const portraitNarrow = window.innerHeight > window.innerWidth && window.innerWidth < 520;
+  document.body.classList.toggle('showRotate', portraitNarrow);
+}
+window.addEventListener('resize', checkOrientation);
+window.addEventListener('orientationchange', ()=>setTimeout(checkOrientation,300));
+document.getElementById('rotateHint').addEventListener('click', ()=>document.body.classList.remove('showRotate'));
+document.addEventListener('touchmove', e=>{ if(document.body.classList.contains('playing') && !e.target.closest('.qbox')) e.preventDefault(); }, {passive:false});
+
+})();
+</script>
+</body>
+</html>
